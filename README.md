@@ -1,5 +1,5 @@
 # HistoryHelper for DBeaver
-**HistoryHelper** - плагин для [DBeaver](https://dbeaver.io/), который генерирует SQL для history-таблиц и триггеров (INSERT/UPDATE/DELETE), помогает быстро включать аудит изменений и при желании сразу применять скрипт к выбранной таблице.
+**HistoryHelper** - плагин для [DBeaver](https://dbeaver.io/), который генерирует SQL для создания history-таблицы и также триггеры (INSERT/UPDATE/DELETE), помогает быстро включать аудит изменений и при желании сразу применять скрипт к выбранной таблице.
 
 ---
 
