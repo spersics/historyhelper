@@ -1,5 +1,6 @@
 package historyhelper.handlers;
 
+import historyhelper.messages.Messages;
 import historyhelper.service.HistorySqlBuilder;
 import historyhelper.ui.HistoryDialog;
 import org.eclipse.core.commands.AbstractHandler;
@@ -31,13 +32,11 @@ public class GenerateHistoryHandler extends AbstractHandler {
     public Object execute(ExecutionEvent event) throws ExecutionException {
         Shell shell = HandlerUtil.getActiveShell(event);
         try {
-
             DBSEntity table = getSelectedEntity(HandlerUtil.getCurrentSelection(event));
             if (table == null) {
-                MessageDialog.openWarning(shell, "History Helper", "Выберите таблицу в навигаторе БД.");
+                MessageDialog.openWarning(shell, Messages.HistoryDialog_title, Messages.Warn_select_table_in_db_navigator);
                 return null;
             }
-
             DBRProgressMonitor monitor = new VoidProgressMonitor();
             List<String> selectedColumns = null;
             boolean onInsert = false;
@@ -45,19 +44,17 @@ public class GenerateHistoryHandler extends AbstractHandler {
             boolean onDelete = false;
             while (true) {
                 HistoryDialog dialog = new HistoryDialog(shell, table, monitor);
-
                 if (dialog.open() != Window.OK) {
                     return null;
                 }
                 if (dialog.getSelectedColumns() == null || dialog.getSelectedColumns().isEmpty()) {
-                    MessageDialog.openWarning(shell, "History Helper", "Выберите хотя бы одну колонку для генерации");
+                    MessageDialog.openWarning(shell, Messages.HistoryDialog_title, Messages.Warn_select_at_least_one_column);
                     continue;
                 }
                 if (!dialog.isOnInsert() && !dialog.isOnUpdate() && !dialog.isOnDelete()) {
-                    MessageDialog.openWarning(shell, "History Helper", "Выберите хотя бы один триггер");
+                    MessageDialog.openWarning(shell, Messages.HistoryDialog_title, Messages.Warn_select_at_least_one_trigger);
                     continue;
                 }
-
                 selectedColumns = dialog.getSelectedColumns().stream().map(DBSEntityAttribute::getName).toList();
                 onInsert = dialog.isOnInsert();
                 onUpdate = dialog.isOnUpdate();
@@ -65,32 +62,31 @@ public class GenerateHistoryHandler extends AbstractHandler {
                 break;
             }
 
-
             String sql;
             try {
                 sql = HistorySqlBuilder.buildHistoryTableSql(table, selectedColumns, onInsert, onUpdate, onDelete);
             } catch (Exception e) {
-                MessageDialog.openInformation(shell, "History Helper", "Ошибка генерации SQL: " + e.getMessage());
+                MessageDialog.openInformation(shell, Messages.HistoryDialog_title, Messages.Warn_sql_gen + e.getMessage());
                 return null;
             }
 
-            String[] buttons = new String[]{"Применить", "Копировать", "Закрыть"};
-            int choice = new MessageDialog(shell, "SQL для " + table.getName(), null, sql, MessageDialog.INFORMATION, buttons, 0).open();
+            String[] buttons = new String[]{Messages.Btn_execute, Messages.Btn_copy, Messages.Btn_cancel};
+            int choice = new MessageDialog(shell, Messages.Warn_sql_for + table.getName(), null, sql, MessageDialog.INFORMATION, buttons, 0).open();
             if (choice == 0) {
                 applySql(shell, table, sql);
                 Clipboard cb = new Clipboard(shell.getDisplay());
                 cb.setContents(new Object[]{sql}, new Transfer[]{TextTransfer.getInstance()});
                 cb.dispose();
-                MessageDialog.openInformation(shell, "History Helper", "SQL скопирован в буфер обмена.");
+                MessageDialog.openInformation(shell, Messages.HistoryDialog_title, Messages.Warn_sql_copied);
             } else if (choice == 1) {
                 Clipboard cb = new Clipboard(shell.getDisplay());
                 cb.setContents(new Object[]{sql}, new Transfer[]{TextTransfer.getInstance()});
                 cb.dispose();
-                MessageDialog.openInformation(shell, "History Helper", "SQL скопирован в буфер обмена.");
+                MessageDialog.openInformation(shell, Messages.HistoryDialog_title, Messages.Warn_sql_copied);
             }
             return null;
         } catch (Throwable t) {
-            MessageDialog.openError(shell, "History Helper - Ошибка", String.valueOf(t));
+            MessageDialog.openError(shell, Messages.Error_plugin_msg_hd, String.valueOf(t));
             throw new ExecutionException("HistoryHelper failed", t);
         }
     }
@@ -123,11 +119,9 @@ public class GenerateHistoryHandler extends AbstractHandler {
                     statement.executeStatement();
                 }
             }
-            MessageDialog.openInformation(shell, "History Helper", "SQL применен к " + table.getName());
-
+            MessageDialog.openInformation(shell, Messages.HistoryDialog_title, Messages.Warn_sql_executed_for + table.getName());
         } catch (Exception ex) {
-            MessageDialog.openError(shell, "History Helper - Ошибка", String.valueOf(ex));
+            MessageDialog.openError(shell, Messages.Error_plugin_msg_hd, String.valueOf(ex));
         }
     }
-
 }

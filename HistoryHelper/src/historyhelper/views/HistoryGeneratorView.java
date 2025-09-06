@@ -14,17 +14,14 @@ public class HistoryGeneratorView extends ViewPart {
 
     @Override
     public void createPartControl(Composite parent) {
-
         Button btn = new Button(parent, SWT.PUSH);
         btn.setText("Configure History");
         btn.addListener(SWT.Selection, e -> openHistoryDialog());
-
     }
 
     @Override
     public void setFocus() {
         // TODO Auto-generated method stub
-
     }
 
     private void openHistoryDialog() {
@@ -34,11 +31,9 @@ public class HistoryGeneratorView extends ViewPart {
             Object firstElement = structured.getFirstElement();
             if (firstElement instanceof DBSTable) {
                 DBSTable selectedTable = (DBSTable) firstElement;
-
                 HistoryDialog dialog = new HistoryDialog(getSite().getShell(), selectedTable, new VoidProgressMonitor());
                 dialog.open();
             }
         }
     }
-
 }
