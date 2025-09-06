@@ -1,39 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-<extension 
-	 point="org.eclipse.ui.commands">
-	<category id="historyhelper.category" name="History Helper"/>
-   <command
-			id="historyhelper.commands.generateHistory"
-			name="Generate History"
-			description="Generate History Table"
-			categoryId="historyhelper.category"
-	></command>
-</extension>
- <extension
-       point="org.eclipse.ui.handlers">
-    <handler
-          class="historyhelper.handlers.GenerateHistoryHandler"
-          commandId="historyhelper.commands.generateHistory">
-    </handler>
- </extension>
-	
-	<extension point="org.eclipse.ui.commandImages">
- <image commandId="historyhelper.commands.generateHistory"
-        icon="platform:/plugin/HistoryHelper/icons/icon.png"/>
-</extension> 
-	
-	<extension point="org.eclipse.ui.menus">
-	<menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
-		<command
-			commandId="historyhelper.commands.generateHistory"
-			label="Generate History Table"
-			style="push"
-			icon="platform:/plugin/HistoryHelper/icons/icon.png">
-		</command>
-	</menuContribution>
-	</extension>
-
-
+    <extension
+            point="org.eclipse.ui.commands">
+        <category id="historyhelper.category" name="History Helper"/>
+        <command
+                id="historyhelper.commands.generateHistory"
+                name="Generate History"
+                description="Generate History Table"
+                categoryId="historyhelper.category"
+        ></command>
+    </extension>
+    <extension
+            point="org.eclipse.ui.handlers">
+        <handler
+                class="historyhelper.handlers.GenerateHistoryHandler"
+                commandId="historyhelper.commands.generateHistory">
+        </handler>
+    </extension>
+    <extension point="org.eclipse.ui.commandImages">
+        <image commandId="historyhelper.commands.generateHistory"
+               icon="platform:/plugin/HistoryHelper/icons/icon.png"/>
+    </extension>
+    <extension point="org.eclipse.ui.menus">
+        <menuContribution locationURI="popup:org.jkiss.dbeaver.core.databaseNavigator?after=additions">
+            <command
+                    commandId="historyhelper.commands.generateHistory"
+                    label="Generate History Table"
+                    style="push"
+                    icon="platform:/plugin/HistoryHelper/icons/icon.png">
+                <visibleWhen>
+                    <with variable="selection">
+                        <count value="1"/>
+                        <iterate ifEmpty="false">
+                            <adapt type="org.jkiss.dbeaver.model.struct.DBSObject">
+                                <instanceof value="org.jkiss.dbeaver.model.struct.rdb.DBSTable"/>
+                            </adapt>
+                        </iterate>
+                    </with>
+                </visibleWhen>
+            </command>
+        </menuContribution>
+    </extension>
 </plugin>

@@ -24,6 +24,8 @@ import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 import org.osgi.framework.FrameworkUtil;
 
+import historyhelper.messages.Messages;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,15 +52,14 @@ public class HistoryDialog extends TitleAreaDialog {
 
     @Override
     protected Control createDialogArea(Composite parent) {
-        setTitle("Выберите поля и опции для генерации history-таблицы");
+        setTitle(Messages.HistoryDialog_subtitle);
 
         Composite area = (Composite) super.createDialogArea(parent);
         Composite container = new Composite(area, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-
-        new Label(container, SWT.NONE).setText("Выберите колонки для генерации:");
+        new Label(container, SWT.NONE).setText(Messages.HistoryDialog_columns_group);
         columnTable = new Table(container, SWT.CHECK | SWT.BORDER | SWT.V_SCROLL);
         columnTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         try {
@@ -75,18 +76,17 @@ public class HistoryDialog extends TitleAreaDialog {
             e.printStackTrace();
         }
 
-
         Group triggersGroup = new Group(container, SWT.NONE);
-        triggersGroup.setText("Триггеры");
+        triggersGroup.setText(Messages.HistoryDialog_triggers_group);
         triggersGroup.setLayout(new GridLayout(1, false));
         triggersGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
         chkInsert = new Button(triggersGroup, SWT.CHECK);
-        chkInsert.setText("ON INSERT   (При создании записи)");
+        chkInsert.setText(Messages.Trigger_on_insert);
         chkUpdate = new Button(triggersGroup, SWT.CHECK);
-        chkUpdate.setText("ON UPDATE   (При обновлении записи)");
+        chkUpdate.setText(Messages.Trigger_on_update);
         chkDelete = new Button(triggersGroup, SWT.CHECK);
-        chkDelete.setText("ON DELETE   (При удалении записи)");
+        chkDelete.setText(Messages.Trigger_on_delete);
 
         return area;
     }
@@ -110,7 +110,7 @@ public class HistoryDialog extends TitleAreaDialog {
     @Override
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
-        newShell.setText("History Table Generator");
+        newShell.setText(Messages.HistoryDialog_title);
         var url = FileLocator.find(FrameworkUtil.getBundle(getClass()), new Path("icons/icon.png"), null);
         if (url != null) {
             ImageDescriptor d = ImageDescriptor.createFromURL(url);

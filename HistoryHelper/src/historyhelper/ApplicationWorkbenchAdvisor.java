@@ -20,5 +20,4 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         configurer.setShowStatusLine(true);
         configurer.setTitle("HistHelper Plugin");
     }
-
 }
