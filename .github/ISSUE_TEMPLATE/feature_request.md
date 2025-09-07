@@ -7,18 +7,21 @@ assignees: spersics
 
 ---
 
-## Идея
-Опишите вашу идею или улучшения в 2-3 предложениях.
+## Идея (Idea)
+Опишите вашу идею или улучшения в 2-3 предложениях. (Describe your idea or improvement in 2-3 sentences.)
 
-## Почему это важно?
-Расскажите, какую проблему решает эта фича или почему она будет полезна.
+## Почему это важно? (Why is it important?)
+Расскажите, какую проблему решает эта фича или почему она будет полезна. (Explain what problem this feature solves or why it would be useful.)
 
-## Возможная реализация
-Если есть идеи реализации - опишите их
+## Возможная реализация (Possible implementation)
+Если есть идеи реализации - опишите их (If you have ideas for implementation - describe them.)
 (Например : новая кнопка в диалоговом окне, новый тип триггера, оптимизация SQL и т.д.)
+(For example: a new button in the dialog window, a new type of trigger, SQL optimization, etc.)
 
-## Ожидаемый результат
+## Ожидаемый результат (Expected result)
 Какой результат вы хотите видеть? Что изменится в использовании HistoryHelper?
+(What result do you expect to see? What will change in using HistoryHelper?)
 
-## Дополнительно
-Любая дополнительная информация, скриншоты или примеры
+## Дополнительно (Additional context)
+Любая дополнительная информация, скриншоты или примеры.
+(Any additional context, screenshots, or examples.)
