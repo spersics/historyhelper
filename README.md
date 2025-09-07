@@ -1,6 +1,7 @@
 # HistoryHelper for DBeaver
+
 **Avaliable in**: [English](https://github.com/spersics/historyhelper/blob/main/README.en.md) | [Русский](https://github.com/spersics/historyhelper/blob/main/README.md)
----
+
 **HistoryHelper** - плагин для [DBeaver](https://dbeaver.io/), который генерирует SQL для создания history-таблицы и также для создания триггеров (INSERT/UPDATE/DELETE). Помогает быстро включать аудит изменений и, при желании, сразу применять скрипт к выбранной таблице.
 
 ---
