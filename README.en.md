@@ -61,6 +61,10 @@
 - [] Additional optimized history mode (store only the last state of the record).
 - [] Support for other DBMS (MySQL, Oracle).
 - [] Add warnings for edge cases (e.g., trying to generate history for and existing history table).
+- [] Added scrolling in the window of the finished SQL script (for large scripts)
+- [] Optimized storage has been added. There is an option to choose between storing the complete history or storing only the preceding value of the record
+- [] The script structure has been changed. The logic has been moved to one function (previously there were three functions, one for each trigger)
+- [] Added the ability to create optional columns: user column (who performed the action), action date column, action column (INSERT/UPDATE/DELETE)
 
 ---
 
