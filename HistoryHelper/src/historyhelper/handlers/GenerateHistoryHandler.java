@@ -2,7 +2,8 @@ package historyhelper.handlers;
 
 import historyhelper.dialog.SqlDialogWithButtons;
 import historyhelper.messages.Messages;
-import historyhelper.service.HistorySqlBuilder;
+import historyhelper.service.HistorySqlBuilderMySql;
+import historyhelper.service.HistorySqlBuilderPostgres;
 import historyhelper.ui.HistoryDialog;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -15,9 +16,11 @@ import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Shell;
+import org.jkiss.dbeaver.model.struct.rdb.DBSCatalog;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTable;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTableConstraint;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.jkiss.dbeaver.model.DBPDataSource;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseNode;
@@ -29,7 +32,10 @@ import org.jkiss.dbeaver.model.struct.DBSEntityAttributeRef;
 import org.jkiss.dbeaver.model.struct.DBSEntityConstraintType;
 import org.jkiss.dbeaver.model.struct.DBSEntityReferrer;
 import org.jkiss.dbeaver.model.struct.DBSEntityType;
+import org.jkiss.dbeaver.model.struct.DBSObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -50,6 +56,10 @@ public class GenerateHistoryHandler extends AbstractHandler {
                     return null;
                 }
             }
+
+            DBPDataSource ds = table.getDataSource();
+            String driverId = ds.getContainer().getDriver().getId();
+
             DBRProgressMonitor monitor = new VoidProgressMonitor();
             List<String> selectedColumns = null;
             List<String> additionalColumns = null;
@@ -81,9 +91,19 @@ public class GenerateHistoryHandler extends AbstractHandler {
             }
 
             String pk = getPkColumn(table, monitor);
-            String sql;
+            String sql = null;
+            List<String> mySqlScript = null;
             try {
-                sql = HistorySqlBuilder.buildHistoryTableSql(pk, table, selectedColumns, additionalColumns, onInsert, onUpdate, onDelete, isOptimizedStorageSelected);
+                if (driverId.contains("postgres")) {
+                    sql = HistorySqlBuilderPostgres.buildHistoryTableSql(pk, table, selectedColumns, additionalColumns, onInsert, onUpdate, onDelete, isOptimizedStorageSelected);
+                } else if (driverId.contains("mysql")) {
+                    sql = HistorySqlBuilderMySql.buildHistoryTableSql(pk, table, selectedColumns, additionalColumns, onInsert, onUpdate, onDelete, isOptimizedStorageSelected, getMySQLDatabaseName(table));
+                    mySqlScript = Arrays.stream(sql.trim().split("\\n\\s*\\n")).map(String::trim).filter(s -> !s.isEmpty()).toList();
+                }  else {
+                    MessageDialog.openInformation(shell, Messages.HistoryDialog_title, Messages.Warn_sql_db_type_is_not_supported);
+                    return null;
+                }
+
             } catch (Exception e) {
                 MessageDialog.openInformation(shell, Messages.HistoryDialog_title, Messages.Warn_sql_gen + e.getMessage());
                 return null;
@@ -94,7 +114,13 @@ public class GenerateHistoryHandler extends AbstractHandler {
 
             int choice = dialog.getResult();
             if (choice == 0) {
-                applySql(shell, table, sql);
+                if (driverId.contains("postgres")) {
+                    applySql(shell, table, sql);
+                } else if (driverId.contains("mysql")) {
+                    applyManySqls(shell, table, mySqlScript);
+                } else if (driverId.contains("oracle")) {
+
+                }
                 Clipboard cb = new Clipboard(shell.getDisplay());
                 cb.setContents(new Object[]{sql}, new Transfer[]{TextTransfer.getInstance()});
                 cb.dispose();
@@ -145,6 +171,44 @@ public class GenerateHistoryHandler extends AbstractHandler {
         } catch (Exception ex) {
             MessageDialog.openError(shell, Messages.Error_plugin_msg_hd, String.valueOf(ex));
         }
+    }
+
+    private void applyManySqls(Shell shell, DBSEntity table, List<String> scripts) {
+        try {
+
+            DBCExecutionContext ctx = DBUtils.getDefaultContext(table, true);
+
+            try (DBCSession session = ctx.openSession(new VoidProgressMonitor(), DBCExecutionPurpose.USER, "Apply history SQL")) {
+                for (String block : scripts) {
+                    if (block == null || block.isBlank()) {
+                        continue;
+                    }
+                    try (DBCStatement stmt = session.prepareStatement(DBCStatementType.SCRIPT, block, false, false, false)) {
+                        stmt.executeStatement();
+                    }
+                }
+            }
+            MessageDialog.openInformation(shell, Messages.HistoryDialog_title, Messages.Warn_sql_executed_for + table.getName());
+        } catch (Exception ex) {
+            MessageDialog.openError(shell, Messages.Error_plugin_msg_hd, String.valueOf(ex));
+        }
+    }
+
+    private String getMySQLDatabaseName(DBSEntity table) {
+        DBSObject container = DBUtils.getPublicObjectContainer(table);
+        if (container == null) {
+            return null;
+        }
+
+        if (container instanceof DBSCatalog) {
+            return container.getName();
+        }
+
+        DBSObject parent = container.getParentObject();
+        if (parent instanceof DBSCatalog) {
+            return parent.getName();
+        }
+        return null;
     }
 
     private String getPkColumn(DBSEntity entity, DBRProgressMonitor monitor) throws Exception {

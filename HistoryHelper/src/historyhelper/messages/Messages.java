@@ -23,6 +23,7 @@ public class Messages extends NLS{
 	public static String Warn_select_table_in_db_navigator;
 	public static String Warn_select_at_least_one_column;
 	public static String Warn_select_at_least_one_trigger;
+	public static String Warn_sql_db_type_is_not_supported;
 	public static String Warn_sql_gen;
 	public static String Warn_sql_copied;
 	public static String Warn_sql_executed_for;

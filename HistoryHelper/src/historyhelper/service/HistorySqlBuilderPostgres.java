@@ -9,7 +9,7 @@ import org.jkiss.dbeaver.model.struct.DBSEntityAttribute;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HistorySqlBuilder {
+public class HistorySqlBuilderPostgres {
     private final static String EMPTY_SPACE = " \r\n"
             + "	";
     private static final String SYS_USER_TYPE = "varchar";
@@ -28,11 +28,6 @@ public class HistorySqlBuilder {
         String histTable = table.getName() + "_hist";
         String justTableName = table.getName();
         DBRProgressMonitor monitor = new VoidProgressMonitor();
-        String dbName = table.getDataSource().getInfo().getDatabaseProductName();
-
-        if (!dbName.equalsIgnoreCase("postgresql")) {
-            return null;
-        }
 
         List<String> columnsDef = new ArrayList<>();
         List<String> columnNames = new ArrayList<>();
@@ -48,9 +43,10 @@ public class HistorySqlBuilder {
             Integer precision = column.getPrecision();
             Integer scale = column.getScale();
             Boolean nullable = column.isRequired();
+            Long length = column.getMaxLength();
             if (!selectedColumns.contains(colName)) continue;
 
-            columnsDef.add(getSqlColumnForCreateTable(colName, colType, precision, nullable, scale));
+            columnsDef.add(getSqlColumnForCreateTable(colName, colType, precision, nullable, scale, length));
             columnNames.add(colName);
             columnValuesOld.add("OLD." + colName);
             columnValuesNew.add("NEW." + colName);
@@ -65,7 +61,7 @@ public class HistorySqlBuilder {
                 String colName = column;
                 String colType = getAdditionalColumnType(colName);
 
-                columnsDef.add(getSqlColumnForCreateTable(colName, colType, null, false, null));
+                columnsDef.add(getSqlColumnForCreateTable(colName, colType, null, false, null, null));
                 columnNames.add(colName);
                 if (colName.equals("sys_user")) {
                     columnValuesOld.add("current_user");
@@ -79,7 +75,9 @@ public class HistorySqlBuilder {
         }
 
         StringBuilder createSql = new StringBuilder();
-        createSql.append("CREATE TABLE IF NOT EXISTS " + histTable + " \n(" + String.join(",\n", columnsDef));
+        createSql
+                .append("DROP TABLE IF EXISTS ").append(histTable + ";")
+                .append("\n\nCREATE TABLE IF NOT EXISTS " + histTable + " \n(" + String.join(",\n", columnsDef));
         if (btnEventColumn) {
             createSql.append(",\nsys_event " + SYS_EVENT_TYPE);
         }
@@ -109,7 +107,14 @@ public class HistorySqlBuilder {
             if (btnEventColumn) {
                 function.append(",'INSERT'");
             }
-            function.append(");")
+            function.append(")")
+                    .append(EMPTY_SPACE).append("ON CONFLICT (" + pkColumnName + ") ").append("DO UPDATE")
+                    .append(EMPTY_SPACE).append("SET ").append(String.join("," + EMPTY_SPACE, excludedColumnNames));
+
+            if (btnEventColumn) {
+                function.append(", \nsys_event = EXCLUDED.sys_event");
+            }
+            function.append(";")
                     .append(EMPTY_SPACE).append("RETURN NEW;");
 
             // update
@@ -284,21 +289,34 @@ public class HistorySqlBuilder {
     }
 
 
-    private static String getSqlColumnForCreateTable(String colName, String colType, Integer precision, Boolean nullable, Integer scale) {
+    private static String getSqlColumnForCreateTable(String colName, String colType, Integer precision, Boolean nullable, Integer scale, Long length) {
         StringBuilder sb = new StringBuilder();
         String type;
         switch (colType.toUpperCase()) {
-            case "varchar":
-                type = colType + "(" + precision.toString() + ")";
+            case "VARCHAR", "CHAR", "BIT", "VARBIT":
+                if (length != null && length > 0) {
+                    type = colType + "(" + length.toString() + ")";
+                    break;
+                }
+                type = colType;
                 break;
-            case "VARCHAR2":
-                type = colType + "(" + precision.toString() + ")";
+            case "NUMERIC", "DECIMAL":
+                if (precision != null) {
+                    if (scale != null) {
+                        type = colType + "(" + precision.toString() + "," + scale.toString() + ")";
+                        break;
+                    }
+                    type = colType + "(" + precision.toString() + ")";
+                    break;
+                }
+                type = colType;
                 break;
-            case "CHAR":
-                type = colType + "(" + precision.toString() + ")";
-                break;
-            case "NUMERIC":
-                type = colType + "(" + precision.toString() + scale != null ? "," + scale.toString() : "" + ")";
+            case "TIMESTAMP", "TIME", "TIMESTAMPTZ":
+                if (precision != null) {
+                    type = colType + "(" + precision.toString() + ")";
+                    break;
+                }
+                type = colType;
                 break;
             default:
                 type = colType;
