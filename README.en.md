@@ -8,31 +8,38 @@
 ## Features
 - Select columns to be logged.
 - UI localization (RU/EN).
-- Added context menu condition (Generate History Table available only for tables).
 - Generate triggers for **ON INSERT / ON UPDATE / ON DELETE**.
-- Two history modes: full and only previous state (in development)
+- Two history storage modes: “Default storage type” and “Optimized storage type.”
 - View the generated SQL and apply it directly from DBeaver.
-- Filter PostgreSQL system columns (only user-defined columns are included).
+- Filter system columns (only user-defined columns are included).
 - Convenient dialog window + context menu icon for tables.
+- Ability to create optional columns: user column (who performed the action), action date column, action column (INSERT/UPDATE/DELETE).
+- Optimized storage. There is an option to choose between storing the complete history or storing only the penultimate value of the record.
+- Support for Postgres and MySql DBMS (The plugin automatically detects the dialect of your DBMS.)
 
 ---
 
 ## Compatibility
 - **DBeaver:** 25.x
 - **Java Runtime (JRE):** 17+
-- **Database:** PostgreSQL (support for other DBMS is planned).
+- **Database:** PostgreSQL , MySql.
 
 ---
 
 ## Installation
 1. Download the latest JAR file from the **Releases** section
 2. Place the file into the plugins or dropins folder of your DBeaver installation:
+   **When installing a new version, delete the old file**
     - **Windows:** '<DBeaver>\plugins\' or '<DBeaver>\dropins\'
     - **Linux/macOS:** '<DBeaver>/plugins/' or '<DBeaver>/dropins/'
 3. Restart DBeaver (optionally clear the cache with "dbeaver.exe -clean -clearPersistedState")
 4. Verify installation:
     - In the Russian version of DBeaver: **Справка -> Информация об установке -> Плагины** -> should list 'HistoryHelper'
     - In the English version of DBeaver: **Help -> Installation Details -> Plug-ins** -> should list 'HistoryHelper'.
+
+**If you encounter a problem** where you cannot open the plugin after reinstalling a new version:
+Go to ‘C:\your_path_to_dbeaver\DBeaver\configuration\org.eclipse.equinox.simpleconfigurator’ and manually change the plugin version in the
+bundles.info file to the one you are installing.
 
 ---
 
@@ -42,7 +49,7 @@
 3. In the dialog window:
     - choose columns to log;
     - select triggers (INSERT/UPDATE/DELETE)
-    - optionally switch history storage mode (TBA)
+    - optionally switch history storage mode
 4. Click **ОК** -> a SQL script for history tables and triggers will be generated..
    You can then:
 - **Execute** SQL script. !The script is also copied to the clipboard!
@@ -54,17 +61,6 @@
 1. Import the project as **Existing Plug-ins** / regular Java plugin.
 2. Make sure **Project -> Properties -> Java Compiler = 21**.
 3. Export: **File -> Export -> Deployable plug-ins and fragments** -> get 'HistoryHelper_<version>.jar'.
-
----
-
-## Roadmap
-- [] Additional optimized history mode (store only the last state of the record).
-- [] Support for other DBMS (MySQL, Oracle).
-- [] Add warnings for edge cases (e.g., trying to generate history for and existing history table).
-- [] Added scrolling in the window of the finished SQL script (for large scripts)
-- [] Optimized storage has been added. There is an option to choose between storing the complete history or storing only the preceding value of the record
-- [] The script structure has been changed. The logic has been moved to one function (previously there were three functions, one for each trigger)
-- [] Added the ability to create optional columns: user column (who performed the action), action date column, action column (INSERT/UPDATE/DELETE)
 
 ---
 
