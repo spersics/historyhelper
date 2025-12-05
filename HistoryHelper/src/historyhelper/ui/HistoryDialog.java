@@ -7,6 +7,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -18,6 +19,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.ui.forms.widgets.ExpandableComposite;
+import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSEntity;
@@ -32,22 +35,29 @@ import java.util.List;
 import java.util.Set;
 
 public class HistoryDialog extends TitleAreaDialog {
+    private FormToolkit toolkit;
     private final DBSEntity table;
     private final DBRProgressMonitor monitor;
     private static final Set<String> PG_SYS_COLS = Set.of("tableoid", "cmax", "xmax", "cmin", "xmin", "ctid");
+    private static final String SYS_USER_COL = "sys_user";
+    private static final String SYS_DATE_COL = "sys_action_date";
+    private static final String SYS_EVENT_COL = "sys_event";
 
     private List<DBSEntityAttribute> selectedColumns = new ArrayList<>();
+    private List<String> additionalColumns = new ArrayList<>();
     private boolean onInsert;
     private boolean onUpdate;
     private boolean onDelete;
+    private boolean isOptimizedStorageSelected;
 
     private Table columnTable;
-    private Button chkInsert, chkUpdate, chkDelete;
+    private Button chkInsert, chkUpdate, chkDelete, btnUserColumn, btnDateColumn, btnEventColumn, btnStorage, btnOptimizedStorage;
 
     public HistoryDialog(Shell parentShell, DBSEntity table, DBRProgressMonitor monitor) {
         super(parentShell);
         this.table = table;
         this.monitor = monitor;
+        toolkit = new FormToolkit(parentShell.getDisplay());
     }
 
     @Override
@@ -55,9 +65,17 @@ public class HistoryDialog extends TitleAreaDialog {
         setTitle(Messages.HistoryDialog_subtitle);
 
         Composite area = (Composite) super.createDialogArea(parent);
-        Composite container = new Composite(area, SWT.NONE);
+        area.setLayout(new GridLayout());
+
+        ScrolledComposite sc = new ScrolledComposite(area, SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER);
+        sc.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        sc.setExpandHorizontal(true);
+        sc.setExpandVertical(true);
+
+        Composite container = new Composite(sc, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        sc.setContent(container);
 
         new Label(container, SWT.NONE).setText(Messages.HistoryDialog_columns_group);
         columnTable = new Table(container, SWT.CHECK | SWT.BORDER | SWT.V_SCROLL);
@@ -75,6 +93,30 @@ public class HistoryDialog extends TitleAreaDialog {
         } catch (DBException e) {
             e.printStackTrace();
         }
+
+        ExpandableComposite exp = toolkit.createExpandableComposite(container, ExpandableComposite.TWISTIE | ExpandableComposite.CLIENT_INDENT);
+        exp.setText(Messages.HistoryDialog_additional_columns_group);
+        exp.setExpanded(false);
+        Composite extras = toolkit.createComposite(exp);
+        extras.setLayout(new GridLayout(1, false));
+        btnUserColumn = new Button(extras, SWT.CHECK);
+        btnUserColumn.setText(Messages.AdditionalColumnUser);
+        btnDateColumn = new Button(extras, SWT.CHECK);
+        btnDateColumn.setText(Messages.AdditionalColumnDate);
+        btnEventColumn = new Button(extras, SWT.CHECK);
+        btnEventColumn.setText(Messages.AdditionalColumnEvent);
+        exp.setClient(extras);
+        exp.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+
+        Group storageGroup = new Group(container, SWT.NONE);
+        storageGroup.setText(Messages.HistoryDialog_optimized_storage_group);
+        storageGroup.setLayout(new GridLayout(1, false));
+        storageGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+        btnStorage = new Button(storageGroup, SWT.RADIO);
+        btnStorage.setText(Messages.StorageBtnMessage);
+        btnOptimizedStorage = new Button(storageGroup, SWT.RADIO);
+        btnOptimizedStorage.setText(Messages.StorageOptimizedBtnMessage);
+        btnStorage.setSelection(true);
 
         Group triggersGroup = new Group(container, SWT.NONE);
         triggersGroup.setText(Messages.HistoryDialog_triggers_group);
@@ -100,9 +142,20 @@ public class HistoryDialog extends TitleAreaDialog {
             }
         }
 
+        if (btnUserColumn.getSelection()) {
+            additionalColumns.add(SYS_USER_COL);
+        }
+        if (btnDateColumn.getSelection()) {
+            additionalColumns.add(SYS_DATE_COL);
+        }
+        if (btnEventColumn.getSelection()) {
+            additionalColumns.add(SYS_EVENT_COL);
+        }
+
         onInsert = chkInsert.getSelection();
         onUpdate = chkUpdate.getSelection();
         onDelete = chkDelete.getSelection();
+        isOptimizedStorageSelected = btnOptimizedStorage.getSelection();
 
         super.okPressed();
     }
@@ -137,6 +190,10 @@ public class HistoryDialog extends TitleAreaDialog {
         return selectedColumns;
     }
 
+    public List<String> getAdditionalColumns() {
+        return additionalColumns;
+    }
+
     public boolean isOnInsert() {
         return onInsert;
     }
@@ -147,5 +204,9 @@ public class HistoryDialog extends TitleAreaDialog {
 
     public boolean isOnDelete() {
         return onDelete;
+    }
+
+    public boolean isOptimizedStorageSelected() {
+        return isOptimizedStorageSelected;
     }
 }
